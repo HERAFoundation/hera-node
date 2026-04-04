@@ -1,0 +1,74 @@
+services:
+  kubo:
+    image: ipfs/kubo:latest
+    ports:
+      - "4001:4001"          # swarm — public, needed for peer discovery
+    expose:
+      - "5001"               # API — internal only, no auth
+      - "8080"               # gateway — internal only, Caddy fronts this
+    volumes:
+      - ipfs_data:/data/ipfs
+      - ./config/kubo-init.sh:/container-init.d/kubo-init.sh:ro
+    environment:
+      - IPFS_PROFILE=server
+    restart: unless-stopped
+
+  pin-endpoint:
+    build: ./pin-endpoint
+    expose:
+      - "3000"
+    depends_on:
+      - kubo
+    environment:
+      - KUBO_API=http://kubo:5001
+      - ALLOWED_ORIGIN=${ALLOWED_ORIGIN}
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:latest
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+    environment:
+      - DOMAIN=${DOMAIN}
+    depends_on:
+      - kubo
+      - pin-endpoint
+    restart: unless-stopped
+
+  # --- Post-MVP: IPFS Cluster ---
+  # Uncomment to enable multi-node federation pinning.
+  # All peers must share the same CLUSTER_SECRET.
+  #
+  # ipfs-cluster:
+  #   image: ipfs-cluster/ipfs-cluster:latest
+  #   ports:
+  #     - "9096:9096"        # cluster swarm — public
+  #   expose:
+  #     - "9094"             # cluster API — internal
+  #     - "9095"             # cluster proxy — internal
+  #   volumes:
+  #     - cluster_data:/data/ipfs-cluster
+  #   environment:
+  #     - CLUSTER_SECRET=${CLUSTER_SECRET}
+  #   depends_on:
+  #     - kubo
+  #   restart: unless-stopped
+
+  # --- Post-MVP: Jetstream Listener ---
+  # Watches the AT Protocol firehose for network.sporechain.entry records
+  # and auto-pins referenced CIDs.
+  #
+  # jetstream-listener:
+  #   build: ./jetstream-listener
+  #   depends_on:
+  #     - kubo
+  #   restart: unless-stopped
+
+volumes:
+  ipfs_data:
+  caddy_data:
+  # cluster_data:

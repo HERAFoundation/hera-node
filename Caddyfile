@@ -1,0 +1,9 @@
+{$DOMAIN} {
+	handle /api/pin* {
+		reverse_proxy pin-endpoint:3000
+	}
+
+	handle /ipfs/* {
+		reverse_proxy kubo:8080
+	}
+}
