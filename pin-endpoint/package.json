@@ -1,0 +1,19 @@
+{
+  "name": "hera-pin-endpoint",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "tsx index.ts"
+  },
+  "dependencies": {
+    "@fastify/multipart": "^9.0.3",
+    "fastify": "^5.3.3",
+    "multiformats": "^13.3.2",
+    "tsx": "^4.19.4",
+    "typescript": "^5.8.3"
+  },
+  "devDependencies": {
+    "@types/node": "^25.5.2"
+  }
+}
